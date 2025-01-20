@@ -14,24 +14,55 @@ func Check(e error) {
 	}
 }
 
+type WeatherData struct {
+	Elevation float32 `json:"elevation"`
+	GenerationTime_ms float64 `json:"generationtime_ms"`
+	Hourly struct {
+		Temperature_2m []float32 `json:"temperature_2m"`
+		Time []string `json:"time"`
+	} `json:"hourly"`
+	HourlyUnits struct {
+		Temperature_2m string `json:"temperature_2m"`
+		Time string `json:"time"`
+	} `json:"hourly_units"`
+	Latitude float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+	Timezone string `json:"timezone"`
+	TimezoneAbbreviation string `json:"timezone_abbreviation"`
+	UtcOffsetSeconds int `json:"utc_offset_seconds"`
+}
+
 // loose coordinates of the science museum of minnesota
 // 44.94, -93.10
-func main() {
+// make a type for this response
+func getWeatherData() (weatherData WeatherData) {
 	resp, err := http.Get("https://api.open-meteo.com/v1/forecast?latitude=44.94&longitude=-93.10&hourly=temperature_2m&models=gfs_seamless")
 	Check(err)
 	defer resp.Body.Close()
-	var val map[string]interface{}
-	err = json.NewDecoder(resp.Body).Decode(&val)
+	err = json.NewDecoder(resp.Body).Decode(&weatherData)
 	Check(err)
-	fmt.Println(val["hourly_units"])
+	return
+}
+
+func main() {
+	weatherData := getWeatherData()
+	fmt.Println(weatherData)
+	
 	// Open the database connection
-	// db, err := sql.Open("sqlite3", "./example.db")
+	// db, err := sql.Open("sqlite3", "./service1.db")
 	// if err != nil {
 	// 	log.Fatal(err)
 	// }
 	// defer db.Close()
-
 	// fmt.Println("Database connection opened successfully.")
+
+	// _, err = db.Exec(`
+	// 	CREATE TABLE IF NOT EXISTS weatherData (
+	// 		id INTEGER PRIMARY KEY AUTOINCREMENT,
+	// 		name TEXT NOT NULL,
+	// 		age INTEGER
+	// 	)
+	// `)
 	// _, err = db.Exec(`
 	// 	CREATE TABLE IF NOT EXISTS users (
 	// 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -47,7 +78,7 @@ func main() {
 	// }
 	// fmt.Println("Table deleted successfully.")
 
-	// // Insert data
+	// Insert data
 	// _, err = db.Exec("INSERT INTO users (name, age) VALUES (?, ?)", "bob", 100)
 	// if err != nil {
 	// 	log.Fatalf("Error inserting data: %v\n", err)
