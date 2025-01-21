@@ -1,8 +1,10 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -44,60 +46,83 @@ func getWeatherData() (weatherData WeatherData) {
 	return
 }
 
+// need to break this into more functions
 func main() {
 	weatherData := getWeatherData()
-	fmt.Println(weatherData)
 	
 	// Open the database connection
-	// db, err := sql.Open("sqlite3", "./service1.db")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// defer db.Close()
-	// fmt.Println("Database connection opened successfully.")
+	db, err := sql.Open("sqlite3", "./service1.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+	fmt.Println("Database connection opened successfully.")
 
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS weather_data (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			elevation REAL,
+			generation_time_ms REAL,
+			temperature_2m REAL,
+			time TEXT,
+			latitude REAL,
+			longitude REAL,
+			timezone TEXT,
+			timezone_abbreviation TEXT,
+			utc_offset_seconds INTEGER
+		)
+	`)
+	Check(err)
+
+	// delete table
 	// _, err = db.Exec(`
-	// 	CREATE TABLE IF NOT EXISTS weatherData (
-	// 		id INTEGER PRIMARY KEY AUTOINCREMENT,
-	// 		name TEXT NOT NULL,
-	// 		age INTEGER
-	// 	)
-	// `)
-	// _, err = db.Exec(`
-	// 	CREATE TABLE IF NOT EXISTS users (
-	// 		id INTEGER PRIMARY KEY AUTOINCREMENT,
-	// 		name TEXT NOT NULL,
-	// 		age INTEGER
-	// 	)
-	// `)
-	// _, err = db.Exec(`
-	// 	DROP TABLE IF EXISTS users
+	// 	DROP TABLE IF EXISTS weather_data
 	// `)
 	// if err != nil {
 	// 	log.Fatalf("Error deleting table: %v\n", err)
 	// }
 	// fmt.Println("Table deleted successfully.")
 
-	// Insert data
-	// _, err = db.Exec("INSERT INTO users (name, age) VALUES (?, ?)", "bob", 100)
-	// if err != nil {
-	// 	log.Fatalf("Error inserting data: %v\n", err)
-	// }
+	// this doesnt feel right 🤔
+	// insert data 
+	_, err = db.Exec("INSERT INTO weather_data (elevation, generation_time_ms, temperature_2m, time, latitude, longitude, timezone, timezone_abbreviation, utc_offset_seconds) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+	weatherData.Elevation, 
+	weatherData.GenerationTime_ms, 
+	weatherData.Hourly.Temperature_2m[0], 
+	weatherData.Hourly.Time[0], 
+	weatherData.Latitude, 
+	weatherData.Longitude, 
+	weatherData.Timezone, 
+	weatherData.TimezoneAbbreviation, 
+	weatherData.UtcOffsetSeconds)
+	if err != nil {
+		log.Fatalf("Error inserting data: %v\n", err)
+	}
 
-	// rows, err := db.Query("SELECT id, name, age FROM users")
-	// if err != nil {
-	// 	log.Fatalf("Error querying data: %v\n", err)
-	// }
-	// defer rows.Close()
+	// query rows from table
+	rows, err := db.Query("SELECT * FROM weather_data")
+	if err != nil {
+		log.Fatalf("Error querying data: %v\n", err)
+	}
+	defer rows.Close()
 
-	// for rows.Next() {
-	// 	var id int
-	// 	var name string
-	// 	var age int
-	// 	err := rows.Scan(&id, &name, &age)
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// 	fmt.Printf("ID: %d, Name: %s, Age: %d\n", id, name, age)
-	// }
+	// read and print rows from table to terminal
+	for rows.Next() {
+		var id int // sqlite automatically adds an ID column
+		var elevation float32
+		var generationTimeMs float64
+		var temperature2m float32
+		var time string
+		var latitude float64
+		var longitude float64
+		var timezone string
+		var timezoneAbbreviation string
+		var utcOffsetSeconds int
+		err := rows.Scan(&id, &elevation, &generationTimeMs, &temperature2m, &time, &latitude, &longitude, &timezone, &timezoneAbbreviation, &utcOffsetSeconds)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("ID: %d, Elevation: %v, Generation Time (ms): %v, Temperature (2m): %v, Time: %s, Latitude: %v, Longitude: %v, Timezone: %s, Timezone Abbreviation: %s, UTC Offset Seconds: %d\n", 
+			id, elevation, generationTimeMs, temperature2m, time, latitude, longitude, timezone, timezoneAbbreviation, utcOffsetSeconds)
+	}
 }
