@@ -27,6 +27,10 @@
             .url = "git+https://github.com/vrischmann/zig-sqlite#25614ffd27ddda5feb615a78d1c945595c50efaf",
             .hash = "1220d7bd38dfca49f4485e8d1c376dbf7a70620e2fd029a11621ed9b5be27534302a",
         },
+        .zqlite = .{
+            .url = "git+https://github.com/karlseguin/zqlite.zig?ref=master#61568e7d59ac7d05ce8e32c287b26bfbab0126a6",
+            .hash = "122003755f1656fff4295cbee88fbc70407650fa815187f621bedbdf6fd0a1da83e6",
+        },
     },
     .paths = .{
         "build.zig",

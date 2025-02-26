@@ -1,6 +1,7 @@
 const std = @import("std");
 const json = std.json;
-const sqlite = @import("sqlite");
+// I'm calling this done as of 2/5/'25 cause idk how to import the popular zig sqlite libs and im not gonna bother figuring it out.
+// I want to work on other projects.
 
 const Forecast = struct {
     latitude: f64,
@@ -29,24 +30,6 @@ pub fn main() !void {
     // (de)init http client
     var client = std.http.Client{ .allocator = allocator };
     defer client.deinit();
-
-    // setup database
-    var db = try sqlite.Db.init(.{
-        .mode = sqlite.Db.Mode{ .File = "./Service.db" },
-        .open_flags = .{
-            .write = true,
-            .create = true,
-        },
-        .threading_mode = .MultiThread,
-    });
-    try db.exec("CREATE TABLE IF NOT EXISTS employees(id integer primary key, name text, age integer, salary integer)", .{}, .{});
-
-    const query =
-        \\SELECT id, name, age, salary FROM employees WHERE age > ? AND age < ?
-    ;
-
-    var stmt = try db.prepare(query);
-    defer stmt.deinit();
 
     //// Make the web request
     // create uri and header buffer
