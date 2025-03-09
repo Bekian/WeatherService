@@ -17,21 +17,21 @@ func Check(e error) {
 }
 
 type WeatherData struct {
-	Elevation float32 `json:"elevation"`
+	Elevation         float32 `json:"elevation"`
 	GenerationTime_ms float64 `json:"generationtime_ms"`
-	Hourly struct {
+	Hourly            struct {
 		Temperature_2m []float32 `json:"temperature_2m"`
-		Time []string `json:"time"`
+		Time           []string  `json:"time"`
 	} `json:"hourly"`
 	HourlyUnits struct {
 		Temperature_2m string `json:"temperature_2m"`
-		Time string `json:"time"`
+		Time           string `json:"time"`
 	} `json:"hourly_units"`
-	Latitude float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
-	Timezone string `json:"timezone"`
-	TimezoneAbbreviation string `json:"timezone_abbreviation"`
-	UtcOffsetSeconds int `json:"utc_offset_seconds"`
+	Latitude             float64 `json:"latitude"`
+	Longitude            float64 `json:"longitude"`
+	Timezone             string  `json:"timezone"`
+	TimezoneAbbreviation string  `json:"timezone_abbreviation"`
+	UtcOffsetSeconds     int     `json:"utc_offset_seconds"`
 }
 
 // loose coordinates of the science museum of minnesota
@@ -49,7 +49,7 @@ func getWeatherData() (weatherData WeatherData) {
 // need to break this into more functions
 func main() {
 	weatherData := getWeatherData()
-	
+
 	// Open the database connection
 	db, err := sql.Open("sqlite3", "./service1.db")
 	if err != nil {
@@ -84,17 +84,17 @@ func main() {
 	// fmt.Println("Table deleted successfully.")
 
 	// this doesnt feel right 🤔
-	// insert data 
-	_, err = db.Exec("INSERT INTO weather_data (elevation, generation_time_ms, temperature_2m, time, latitude, longitude, timezone, timezone_abbreviation, utc_offset_seconds) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
-	weatherData.Elevation, 
-	weatherData.GenerationTime_ms, 
-	weatherData.Hourly.Temperature_2m[0], 
-	weatherData.Hourly.Time[0], 
-	weatherData.Latitude, 
-	weatherData.Longitude, 
-	weatherData.Timezone, 
-	weatherData.TimezoneAbbreviation, 
-	weatherData.UtcOffsetSeconds)
+	// insert data
+	_, err = db.Exec("INSERT INTO weather_data (elevation, generation_time_ms, temperature_2m, time, latitude, longitude, timezone, timezone_abbreviation, utc_offset_seconds) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		weatherData.Elevation,
+		weatherData.GenerationTime_ms,
+		weatherData.Hourly.Temperature_2m[0],
+		weatherData.Hourly.Time[0],
+		weatherData.Latitude,
+		weatherData.Longitude,
+		weatherData.Timezone,
+		weatherData.TimezoneAbbreviation,
+		weatherData.UtcOffsetSeconds)
 	if err != nil {
 		log.Fatalf("Error inserting data: %v\n", err)
 	}
@@ -122,7 +122,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("ID: %d, Elevation: %v, Generation Time (ms): %v, Temperature (2m): %v, Time: %s, Latitude: %v, Longitude: %v, Timezone: %s, Timezone Abbreviation: %s, UTC Offset Seconds: %d\n", 
+		fmt.Printf("ID: %d, Elevation: %v, Generation Time (ms): %v, Temperature (2m): %v, Time: %s, Latitude: %v, Longitude: %v, Timezone: %s, Timezone Abbreviation: %s, UTC Offset Seconds: %d\n",
 			id, elevation, generationTimeMs, temperature2m, time, latitude, longitude, timezone, timezoneAbbreviation, utcOffsetSeconds)
 	}
 }

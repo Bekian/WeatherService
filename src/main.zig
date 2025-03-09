@@ -1,7 +1,7 @@
 const std = @import("std");
 const json = std.json;
-// I'm calling this done as of 2/5/'25 cause idk how to import the popular zig sqlite libs and im not gonna bother figuring it out.
-// I want to work on other projects.
+const sqlite = @import("sqlite");
+const zdt = @import("zdt");
 
 const Forecast = struct {
     latitude: f64,
@@ -30,6 +30,42 @@ pub fn main() !void {
     // (de)init http client
     var client = std.http.Client{ .allocator = allocator };
     defer client.deinit();
+    // init db
+    var db = try sqlite.Db.init(.{
+        .mode = sqlite.Db.Mode{ .File = "forecasts.db" },
+        .open_flags = .{
+            .write = true,
+            .create = true,
+        },
+    });
+    const create_table =
+        \\CREATE TABLE forecast (
+        \\id SERIAL PRIMARY KEY,
+        \\latitude DOUBLE PRECISION NOT NULL,
+        \\longitude DOUBLE PRECISION NOT NULL,
+        \\generationtime_ms DOUBLE PRECISION NOT NULL,
+        \\utc_offset_seconds INTEGER NOT NULL,
+        \\timezone TEXT NOT NULL,
+        \\timezone_abbreviation TEXT NOT NULL,
+        \\elevation DOUBLE PRECISION NOT NULL
+        \\);
+        \\
+        \\CREATE TABLE hourly_units (
+        \\forecast_id INTEGER REFERENCES forecast(id) ON DELETE CASCADE,
+        \\time TEXT NOT NULL,
+        \\temperature_2m TEXT NOT NULL,
+        \\PRIMARY KEY (forecast_id)
+        \\);
+        \\
+        \\CREATE TABLE hourly (
+        \\id SERIAL PRIMARY KEY,
+        \\forecast_id INTEGER REFERENCES forecast(id) ON DELETE CASCADE,
+        \\time TEXT NOT NULL,
+        \\temperature_2m REAL NOT NULL
+        \\);
+    ;
+
+    try db.exec(create_table);
 
     //// Make the web request
     // create uri and header buffer
@@ -46,12 +82,12 @@ pub fn main() !void {
     // read and print response body
     const body = try req.reader().readAllAlloc(allocator, 1024 * 1024);
     defer allocator.free(body);
-    //std.debug.print("Response body: {s}\n", .{body});
 
     // parse json
     const forecast = try json.parseFromSlice(Forecast, allocator, body, .{});
     defer forecast.deinit();
     const val = forecast.value;
+    // test parse to datetime which can be converted to string (even though it starts as a string)
+    //const timeS = try zdt.Datetime.fromISO8601(val.hourly.time[0]);
 
-    std.debug.print("{any}", .{val});
 }
